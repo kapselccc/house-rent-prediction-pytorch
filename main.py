@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import time
 import matplotlib.pyplot as plt
+from torch.utils.data import TensorDataset
 
 test_run = 1
 
@@ -45,19 +46,26 @@ if __name__ == '__main__':
     data = pd.get_dummies(data, columns=['Area Type', 'City', 'Furnishing Status', 'Tenant Preferred', 'Point of '
                                                                                                        'Contact'])
     # Split data
-    X = data.drop(columns='Rent', axis=1).astype("int64")
-    y = data['Rent'].astype("int64")
+    X = torch.FloatTensor(data.drop(columns='Rent', axis=1).astype("int64").to_numpy())
+    y = torch.FloatTensor(data['Rent'].astype("int64").to_numpy())
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=77)
-    X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.5, random_state=77)
+    dataset = TensorDataset(X, y)
 
-    X_train = torch.FloatTensor(X_train.to_numpy())
-    X_val = torch.FloatTensor(X_val.to_numpy())
-    X_test = torch.FloatTensor(X_test.to_numpy())
-    y_train = torch.FloatTensor(y_train.to_numpy()).reshape(-1,1)
-    y_test = torch.FloatTensor(y_test.to_numpy()).reshape(-1,1)
-    y_val = torch.FloatTensor(y_val.to_numpy()).reshape(-1,1)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=77)
+    # X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.5, random_state=77)
+    #
+    # X_train = torch.FloatTensor(X_train.to_numpy())
+    # X_val = torch.FloatTensor(X_val.to_numpy())
+    # X_test = torch.FloatTensor(X_test.to_numpy())
+    # y_train = torch.FloatTensor(y_train.to_numpy()).reshape(-1,1)
+    # y_test = torch.FloatTensor(y_test.to_numpy()).reshape(-1,1)
+    # y_val = torch.FloatTensor(y_val.to_numpy()).reshape(-1,1)
 
+    dataset = TensorDataset(X, y)
+    train_size = math.floor(0.7 * len(dataset))
+    val_size = math.floor(0.15 * len(dataset))
+    test_size = len(dataset) - train_size - val_size
+    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
     # train model
     torch.manual_seed(77)
 
@@ -89,6 +97,8 @@ if __name__ == '__main__':
     plt.ylabel('RMSE Loss')
     plt.xlabel('epoch')
 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=77)
+    X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.5, random_state=77)
     # Validation
     with torch.no_grad():
         y_pred = model(X_val)
@@ -96,3 +106,4 @@ if __name__ == '__main__':
         print(f"Validation loss after {epochs} epochs: {loss:8.5f}")
 
     torch.save(model.state_dict(), f'Model_{test_run}.pt')
+
