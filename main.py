@@ -54,30 +54,28 @@ if __name__ == '__main__':
     X_train = torch.FloatTensor(X_train.to_numpy())
     X_val = torch.FloatTensor(X_val.to_numpy())
     X_test = torch.FloatTensor(X_test.to_numpy())
-    y_train = torch.FloatTensor(y_train.to_numpy())
-    y_test = torch.FloatTensor(y_test.to_numpy())
-    y_val = torch.FloatTensor(y_val.to_numpy())
+    y_train = torch.FloatTensor(y_train.to_numpy()).reshape(-1,1)
+    y_test = torch.FloatTensor(y_test.to_numpy()).reshape(-1,1)
+    y_val = torch.FloatTensor(y_val.to_numpy()).reshape(-1,1)
 
     # train model
     torch.manual_seed(77)
 
-    model = Model(X.shape[1], [200, 100], 0.4)
+    model = Model(X.shape[1], [400, 200, 100], 0.5)
 
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    epochs = 400
+    epochs = 800
     losses = []
     start_time = time.time()
     for i in range(epochs):
         i += 1
-        for x in X_train:
-            y_pred = model.forward(x)
-            loss = torch.sqrt(criterion(y_pred, y_train))
-            losses.append(loss.item())
+        y_pred = model.forward(X_train)
+        loss = torch.sqrt(criterion(y_pred, y_train))
+        losses.append(loss.item())
 
-
-        if i % 10 == 0:
+        if i % 10 == 1:
             print(f"Epoch ({i:3}): Loss: {loss.item():10.5f}")
 
         optimizer.zero_grad()
